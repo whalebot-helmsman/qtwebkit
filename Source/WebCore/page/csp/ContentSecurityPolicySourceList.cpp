@@ -78,7 +78,7 @@ static bool isSourceListNone(const String& value)
     skipWhile<UChar, isASCIISpace>(position, end);
     if (position != end)
         return false;
-    
+
     return true;
 }
 
@@ -185,6 +185,8 @@ void ContentSecurityPolicySourceList::parse(const UChar* begin, const UChar* end
 //
 bool ContentSecurityPolicySourceList::parseSource(const UChar* begin, const UChar* end, String& scheme, String& host, int& port, String& path, bool& hostHasWildcard, bool& portHasWildcard)
 {
+    m_allowEval = true;
+
     if (begin == end)
         return false;
 
@@ -357,16 +359,16 @@ bool ContentSecurityPolicySourceList::parsePath(const UChar* begin, const UChar*
 {
     ASSERT(begin <= end);
     ASSERT(path.isEmpty());
-    
+
     const UChar* position = begin;
     skipWhile<UChar, isPathComponentCharacter>(position, end);
     // path/to/file.js?query=string || path/to/file.js#anchor
     //                ^                               ^
     if (position < end)
         m_policy.reportInvalidPathCharacter(m_directiveName, String(begin, end - begin), *position);
-    
+
     path = decodeURLEscapeSequences(String(begin, position - begin));
-    
+
     ASSERT(position <= end);
     ASSERT(position == end || (*position == '#' || *position == '?'));
     return true;
@@ -379,25 +381,25 @@ bool ContentSecurityPolicySourceList::parsePort(const UChar* begin, const UChar*
     ASSERT(begin <= end);
     ASSERT(!port);
     ASSERT(!portHasWildcard);
-    
+
     if (!skipExactly<UChar>(begin, end, ':'))
         ASSERT_NOT_REACHED();
-    
+
     if (begin == end)
         return false;
-    
+
     if (end - begin == 1 && *begin == '*') {
         port = 0;
         portHasWildcard = true;
         return true;
     }
-    
+
     const UChar* position = begin;
     skipWhile<UChar, isASCIIDigit>(position, end);
-    
+
     if (position != end)
         return false;
-    
+
     bool ok;
     port = charactersToIntStrict(begin, end - begin, &ok);
     return ok;
